@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block titulo %}Painel{% endblock %}
+{% block conteudo %}
+<div class="cabecalho-pagina">
+  <h1>Painel</h1>
+  <a class="botao" href="{{ url_for('veiculos.novo') }}">+ Cadastrar veículo</a>
+</div>
+
+<ul class="indicadores">
+  <li><a href="{{ url_for('veiculos.lista', status='DISPONIVEL') }}"><span class="indicador__valor">{{ resumo.disponiveis }}</span><span class="indicador__rotulo">Disponíveis</span></a></li>
+  <li><a href="{{ url_for('veiculos.lista', status='RESERVADO') }}"><span class="indicador__valor">{{ resumo.reservados }}</span><span class="indicador__rotulo">Reservados</span></a></li>
+  <li><a href="{{ url_for('veiculos.lista', status='VENDIDO') }}"><span class="indicador__valor">{{ resumo.vendidos }}</span><span class="indicador__rotulo">Vendidos</span></a></li>
+  <li><a href="{{ url_for('propostas.lista', status='PENDENTE') }}"><span class="indicador__valor">{{ resumo.propostas_pendentes }}</span><span class="indicador__rotulo">Propostas pendentes</span></a></li>
+  <li><a href="{{ url_for('vendas.lista') }}"><span class="indicador__valor">{{ resumo.faturamento|moeda }}</span><span class="indicador__rotulo">Faturamento</span></a></li>
+</ul>
+
+<div class="duas-colunas">
+  <section>
+    <h2>Propostas pendentes recentes</h2>
+    {% if ultimas_propostas %}
+      <ul class="lista-simples">
+        {% for p in ultimas_propostas %}
+          <li>
+            <strong>{{ p.cliente.nome }}</strong> ofereceu <strong>{{ p.valor_ofertado|moeda }}</strong>
+            no {{ p.veiculo.titulo }}
+            <small>{{ p.criado_em|data_hora }}</small>
+          </li>
+        {% endfor %}
+      </ul>
+      <a href="{{ url_for('propostas.lista') }}">Ver todas as propostas →</a>
+    {% else %}
+      <p class="vazio-inline">Nenhuma proposta pendente.</p>
+    {% endif %}
+  </section>
+  <section>
+    <h2>Últimas vendas</h2>
+    {% if ultimas_vendas %}
+      <ul class="lista-simples">
+        {% for v in ultimas_vendas %}
+          <li>
+            <strong>{{ v.veiculo.titulo }}</strong> por {{ v.valor_final|moeda }}
+            <small>{{ v.data_venda|data }} · {{ v.vendedor.nome }}</small>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="vazio-inline">Nenhuma venda registrada ainda.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

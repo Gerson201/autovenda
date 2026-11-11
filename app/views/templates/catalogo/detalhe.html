@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo, texto_longo %}
+{% block titulo %}{{ veiculo.titulo }}{% endblock %}
+{% block conteudo %}
+<nav class="trilha" aria-label="Você está em">
+  <a href="{{ url_for('catalogo.index') }}">Catálogo</a> <span aria-hidden="true">›</span>
+  <span aria-current="page">{{ veiculo.marca.nome }} {{ veiculo.modelo }}</span>
+</nav>
+
+<article class="detalhe">
+  <div class="detalhe__imagem">
+    <img src="{{ imagem_veiculo(veiculo) }}" alt="Foto do {{ veiculo.titulo }}">
+  </div>
+
+  <div class="detalhe__info">
+    {% if veiculo.status == 'RESERVADO' %}
+      <p class="alerta alerta--aviso">Este veículo está reservado para outro cliente, mas você ainda pode enviar uma proposta.</p>
+    {% endif %}
+    <h1>{{ veiculo.titulo }}</h1>
+    <p class="preco preco--grande">{{ veiculo.preco|moeda }}</p>
+
+    <dl class="ficha">
+      <div><dt>Ano</dt><dd>{{ veiculo.anos }}</dd></div>
+      <div><dt>Quilometragem</dt><dd>{{ veiculo.quilometragem|milhar }} km</dd></div>
+      <div><dt>Combustível</dt><dd>{{ veiculo.combustivel_rotulo }}</dd></div>
+      <div><dt>Câmbio</dt><dd>{{ veiculo.cambio_rotulo }}</dd></div>
+      <div><dt>Cor</dt><dd>{{ veiculo.cor }}</dd></div>
+      <div><dt>Final da placa</dt><dd>{{ veiculo.placa_mascarada }}</dd></div>
+    </dl>
+
+    {% if veiculo.descricao %}
+      <h2>Sobre o veículo</h2>
+      <p class="descricao">{{ veiculo.descricao }}</p>
+    {% endif %}
+  </div>
+
+  <section class="detalhe__proposta cartao-form" aria-labelledby="titulo-proposta">
+    <h2 id="titulo-proposta">Fazer uma proposta</h2>
+    <p class="ajuda">Preencha seus dados e um vendedor retornará o contato. Campos com <span class="obrigatorio">*</span> são obrigatórios.</p>
+    <form method="post" action="{{ url_for('catalogo.enviar_proposta', veiculo_id=veiculo.id) }}" data-validar novalidate>
+      {{ campo_csrf() }}
+      {{ campo('nome', 'Nome completo', dados, erros, obrigatorio=true, atributos='autocomplete="name" maxlength="100" minlength="3"') }}
+      {{ campo('email', 'E-mail', dados, erros, tipo='email', obrigatorio=true, atributos='autocomplete="email" data-regra="email"') }}
+      {{ campo('telefone', 'Telefone (com DDD)', dados, erros, tipo='tel', obrigatorio=true, atributos='autocomplete="tel" data-regra="telefone" data-mascara="telefone" placeholder="(11) 91234-5678"') }}
+      {{ campo('valor_ofertado', 'Valor da proposta (R$)', dados, erros, tipo='number', obrigatorio=true, ajuda='Preço anunciado: ' ~ (veiculo.preco|moeda), atributos='min="1" step="0.01" data-regra="positivo"') }}
+      {{ texto_longo('mensagem', 'Mensagem (opcional)', dados, erros, maximo=500) }}
+      <button class="botao botao--bloco" type="submit">Enviar proposta</button>
+    </form>
+  </section>
+</article>
+{% endblock %}

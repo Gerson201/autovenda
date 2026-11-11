@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "_macros.html" import paginar %}
+{% block titulo %}Vendas{% endblock %}
+{% block conteudo %}
+<div class="cabecalho-pagina">
+  <h1>Vendas</h1>
+  <a class="botao" href="{{ url_for('vendas.nova') }}">+ Registrar venda</a>
+</div>
+<p class="resumo-total">Faturamento total: <strong>{{ faturamento|moeda }}</strong></p>
+
+{% if paginacao.items %}
+<div class="tabela-rolagem">
+  <table class="tabela">
+    <thead>
+      <tr><th scope="col">Data</th><th scope="col">Veículo</th><th scope="col">Comprador</th><th scope="col">Vendedor</th><th scope="col">Pagamento</th><th scope="col">Valor</th></tr>
+    </thead>
+    <tbody>
+      {% for v in paginacao.items %}
+      <tr>
+        <td data-rotulo="Data">{{ v.data_venda|data_hora }}</td>
+        <td data-rotulo="Veículo">{{ v.veiculo.titulo }}<br><small>{{ v.veiculo.placa_formatada }}</small></td>
+        <td data-rotulo="Comprador">{{ v.cliente.nome }}<br><small>CPF {{ v.cliente.cpf_formatado }}</small></td>
+        <td data-rotulo="Vendedor">{{ v.vendedor.nome }}</td>
+        <td data-rotulo="Pagamento">{{ v.forma_pagamento_rotulo }}</td>
+        <td data-rotulo="Valor"><strong>{{ v.valor_final|moeda }}</strong></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{{ paginar(paginacao, 'vendas.lista') }}
+{% else %}
+  <div class="vazio"><p>Nenhuma venda registrada ainda.</p></div>
+{% endif %}
+{% endblock %}

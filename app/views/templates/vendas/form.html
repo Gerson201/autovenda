@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo, selecao %}
+{% block titulo %}Registrar venda{% endblock %}
+{% block conteudo %}
+<nav class="trilha" aria-label="Você está em">
+  <a href="{{ url_for('vendas.lista') }}">Vendas</a> <span aria-hidden="true">›</span>
+  <span aria-current="page">Registrar</span>
+</nav>
+<h1>Registrar venda</h1>
+<p class="ajuda">Ao confirmar, o veículo sai do catálogo e as demais propostas dele são recusadas automaticamente.</p>
+
+{% if not veiculos %}
+  <div class="vazio"><p>Não há veículos disponíveis para venda.</p></div>
+{% else %}
+<form class="cartao-form formulario-grade" method="post" action="{{ url_for('vendas.nova') }}" data-validar novalidate>
+  {{ campo_csrf() }}
+  <input type="hidden" name="proposta_id" value="{{ dados.get('proposta_id', '') }}">
+  {% if erros.get('proposta_id') %}<p class="alerta alerta--erro">{{ erros.proposta_id }}</p>{% endif %}
+
+  <fieldset>
+    <legend>Veículo e pagamento</legend>
+    {% set opcoes_veiculo = [] %}
+    {% for v in veiculos %}{% set _ = opcoes_veiculo.append((v.id, v.titulo ~ ' · ' ~ v.placa_formatada ~ ' · ' ~ (v.preco|moeda) ~ (' (reservado)' if v.status == 'RESERVADO' else ''))) %}{% endfor %}
+    {{ selecao('veiculo_id', 'Veículo', opcoes_veiculo, dados, erros, obrigatorio=true) }}
+    {{ campo('valor_final', 'Valor final (R$)', dados, erros, tipo='number', obrigatorio=true, atributos='min="0.01" step="0.01" data-regra="positivo"') }}
+    {{ selecao('forma_pagamento', 'Forma de pagamento', formas_pagamento.items(), dados, erros, obrigatorio=true) }}
+  </fieldset>
+
+  <fieldset>
+    <legend>Comprador</legend>
+    {{ campo('nome', 'Nome completo', dados, erros, obrigatorio=true, atributos='maxlength="100" minlength="3"') }}
+    {{ campo('cpf', 'CPF', dados, erros, obrigatorio=true, atributos='data-regra="cpf" data-mascara="cpf" placeholder="000.000.000-00" maxlength="14"') }}
+    {{ campo('email', 'E-mail', dados, erros, tipo='email', obrigatorio=true, atributos='data-regra="email"') }}
+    {{ campo('telefone', 'Telefone', dados, erros, tipo='tel', obrigatorio=true, atributos='data-regra="telefone" data-mascara="telefone"') }}
+  </fieldset>
+
+  <div class="acoes-form">
+    <a class="botao botao--fantasma" href="{{ url_for('vendas.lista') }}">Cancelar</a>
+    <button class="botao" type="submit" data-confirmar-botao="Confirmar o registro desta venda? O veículo será marcado como vendido.">Registrar venda</button>
+  </div>
+</form>
+{% endif %}
+{% endblock %}

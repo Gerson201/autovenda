@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo %}
+{% block titulo %}Marcas{% endblock %}
+{% block conteudo %}
+<h1>Marcas</h1>
+
+{% if g.usuario.eh_admin %}
+<form class="cartao-form form-linha" method="post" action="{{ url_for('marcas.criar') }}" data-validar novalidate>
+  {{ campo_csrf() }}
+  {{ campo('nome', 'Nova marca', dados, erros, obrigatorio=true, atributos='maxlength="50" placeholder="Ex.: Peugeot"') }}
+  <button class="botao" type="submit">Adicionar</button>
+</form>
+{% else %}
+<p class="ajuda">Somente administradores podem cadastrar ou excluir marcas.</p>
+{% endif %}
+
+{% if marcas %}
+<div class="tabela-rolagem">
+  <table class="tabela">
+    <thead><tr><th scope="col">Marca</th><th scope="col">Veículos cadastrados</th><th scope="col"><span class="visualmente-oculto">Ações</span></th></tr></thead>
+    <tbody>
+      {% for m in marcas %}
+      <tr>
+        <td data-rotulo="Marca">{{ m.nome }}</td>
+        <td data-rotulo="Veículos">{{ totais.get(m.id, 0) }}</td>
+        <td class="tabela__acoes">
+          {% if g.usuario.eh_admin %}
+            {% if totais.get(m.id, 0) == 0 %}
+              <form method="post" action="{{ url_for('marcas.excluir', marca_id=m.id) }}" data-confirmar="Excluir a marca {{ m.nome }}?">
+                {{ campo_csrf() }}
+                <button class="botao botao--pequeno botao--perigo" type="submit">Excluir</button>
+              </form>
+            {% else %}
+              <small title="Marcas com veículos não podem ser excluídas">Em uso</small>
+            {% endif %}
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+  <div class="vazio"><p>Nenhuma marca cadastrada.</p></div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block conteudo %}
+<section class="pagina-erro">
+  <p class="pagina-erro__codigo">{{ codigo }}</p>
+  <h1>{{ titulo }}</h1>
+  <p>{{ mensagem }}</p>
+  <div class="acoes-form">
+    <a class="botao" href="{{ url_for('catalogo.index') }}">Ir para o catálogo</a>
+    <button class="botao botao--fantasma" type="button" data-voltar>Voltar à página anterior</button>
+  </div>
+</section>
+{% endblock %}

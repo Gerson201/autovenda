@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block titulo %}Catálogo{% endblock %}
+{% block conteudo %}
+<section class="destaque">
+  <h1>Encontre seu próximo carro</h1>
+  <p>Seminovos revisados, com procedência e proposta online em poucos cliques.</p>
+  <form class="busca" method="get" action="{{ url_for('catalogo.index') }}" role="search">
+    <label for="q" class="visualmente-oculto">Buscar por marca ou modelo</label>
+    <input id="q" name="q" type="search" placeholder="Busque por marca ou modelo (ex.: Corolla)" value="{{ filtros.q }}">
+    <button class="botao" type="submit">Buscar</button>
+  </form>
+</section>
+
+<div class="catalogo">
+  <aside class="filtros" aria-labelledby="titulo-filtros">
+    <h2 id="titulo-filtros">Filtros</h2>
+    <form method="get" action="{{ url_for('catalogo.index') }}" data-validar>
+      <input type="hidden" name="q" value="{{ filtros.q }}">
+      <div class="campo">
+        <label for="marca">Marca</label>
+        <select id="marca" name="marca">
+          <option value="">Todas</option>
+          {% for m in marcas %}<option value="{{ m.id }}" {% if m.id|string == filtros.marca %}selected{% endif %}>{{ m.nome }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="campo-duplo">
+        <div class="campo">
+          <label for="preco_min">Preço mín. (R$)</label>
+          <input id="preco_min" name="preco_min" type="number" min="0" step="1000" value="{{ filtros.preco_min }}">
+        </div>
+        <div class="campo">
+          <label for="preco_max">Preço máx. (R$)</label>
+          <input id="preco_max" name="preco_max" type="number" min="0" step="1000" value="{{ filtros.preco_max }}">
+          <small class="erro-campo"></small>
+        </div>
+      </div>
+      <div class="campo">
+        <label for="ano_min">Ano a partir de</label>
+        <input id="ano_min" name="ano_min" type="number" min="1950" max="2100" value="{{ filtros.ano_min }}">
+      </div>
+      <div class="campo">
+        <label for="combustivel">Combustível</label>
+        <select id="combustivel" name="combustivel">
+          <option value="">Todos</option>
+          {% for valor, rotulo in combustiveis.items() %}<option value="{{ valor }}" {% if valor == filtros.combustivel %}selected{% endif %}>{{ rotulo }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="campo">
+        <label for="cambio">Câmbio</label>
+        <select id="cambio" name="cambio">
+          <option value="">Todos</option>
+          {% for valor, rotulo in cambios.items() %}<option value="{{ valor }}" {% if valor == filtros.cambio %}selected{% endif %}>{{ rotulo }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="campo">
+        <label for="ordem">Ordenar por</label>
+        <select id="ordem" name="ordem">
+          {% for valor, rotulo in ordenacoes.items() %}<option value="{{ valor }}" {% if valor == filtros.ordem %}selected{% endif %}>{{ rotulo }}</option>{% endfor %}
+        </select>
+      </div>
+      <button class="botao botao--bloco" type="submit">Aplicar filtros</button>
+      {% if filtros_ativos %}<a class="botao botao--fantasma botao--bloco" href="{{ url_for('catalogo.index') }}">Limpar filtros</a>{% endif %}
+    </form>
+  </aside>
+
+  <section class="resultados" aria-labelledby="titulo-resultados">
+    <h2 id="titulo-resultados" class="resultados__titulo">
+      {{ paginacao.total }} veículo{{ 's' if paginacao.total != 1 }} encontrado{{ 's' if paginacao.total != 1 }}
+    </h2>
+
+    {% if paginacao.items %}
+      <ul class="grade">
+        {% for v in paginacao.items %}
+          <li class="cartao">
+            <a class="cartao__link" href="{{ url_for('catalogo.detalhe', veiculo_id=v.id) }}">
+              <div class="cartao__imagem">
+                <img src="{{ imagem_veiculo(v) }}" alt="Foto do {{ v.titulo }}" loading="lazy">
+                {% if v.status == 'RESERVADO' %}<span class="selo">Reservado</span>{% endif %}
+              </div>
+              <div class="cartao__corpo">
+                <h3>{{ v.marca.nome }} {{ v.modelo }}</h3>
+                <p class="cartao__versao">{{ v.versao or '' }}</p>
+                <ul class="cartao__dados">
+                  <li>{{ v.anos }}</li>
+                  <li>{{ v.quilometragem|milhar }} km</li>
+                  <li>{{ v.cambio_rotulo }}</li>
+                </ul>
+                <p class="preco">{{ v.preco|moeda }}</p>
+              </div>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+      {% from "_macros.html" import paginar %}
+      {{ paginar(paginacao, 'catalogo.index') }}
+    {% else %}
+      <div class="vazio">
+        <p><strong>Nenhum veículo encontrado com esses filtros.</strong></p>
+        <p>Tente ampliar a faixa de preço ou remover algum filtro.</p>
+        <a class="botao" href="{{ url_for('catalogo.index') }}">Ver todos os veículos</a>
+      </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

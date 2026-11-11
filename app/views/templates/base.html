@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Carros seminovos{% endblock %} · AutoVenda</title>
+  <link rel="icon" href="{{ url_for('static', filename='img/logo.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/estilo.css') }}">
+</head>
+<body>
+  <a class="pular" href="#conteudo">Pular para o conteúdo</a>
+
+  <header class="topo">
+    <div class="container topo__linha">
+      <a class="logo" href="{{ url_for('catalogo.index') }}">
+        <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="" width="32" height="32">
+        <span>Auto<strong>Venda</strong></span>
+      </a>
+      <button class="menu__botao" type="button" aria-expanded="false" aria-controls="menu-principal">Menu</button>
+      <nav class="menu" id="menu-principal" aria-label="Menu principal">
+        {% set ep = request.endpoint or '' %}
+        <a href="{{ url_for('catalogo.index') }}" {% if ep.startswith('catalogo') %}aria-current="page"{% endif %}>Catálogo</a>
+        {% if g.usuario %}
+          <a href="{{ url_for('painel.index') }}" {% if ep.startswith('painel') %}aria-current="page"{% endif %}>Painel</a>
+          <a href="{{ url_for('veiculos.lista') }}" {% if ep.startswith('veiculos') %}aria-current="page"{% endif %}>Veículos</a>
+          <a href="{{ url_for('propostas.lista') }}" {% if ep.startswith('propostas') %}aria-current="page"{% endif %}>Propostas</a>
+          <a href="{{ url_for('vendas.lista') }}" {% if ep.startswith('vendas') %}aria-current="page"{% endif %}>Vendas</a>
+          <a href="{{ url_for('marcas.lista') }}" {% if ep.startswith('marcas') %}aria-current="page"{% endif %}>Marcas</a>
+          <form method="post" action="{{ url_for('auth.logout') }}" class="menu__sair">
+            {{ campo_csrf() }}
+            <button type="submit" class="botao botao--fantasma botao--pequeno">Sair ({{ g.usuario.nome.split()[0] }})</button>
+          </form>
+        {% else %}
+          <a href="{{ url_for('auth.login') }}" {% if ep.startswith('auth') %}aria-current="page"{% endif %}>Área do vendedor</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main id="conteudo" class="container conteudo">
+    {% with mensagens = get_flashed_messages(with_categories=true) %}
+      {% if mensagens %}
+        <div class="mensagens" aria-live="polite">
+          {% for categoria, mensagem in mensagens %}
+            <div class="alerta alerta--{{ categoria }}" role="alert">
+              <span>{{ mensagem }}</span>
+              <button type="button" class="alerta__fechar" aria-label="Fechar mensagem">&times;</button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block conteudo %}{% endblock %}
+  </main>
+
+  <footer class="rodape">
+    <div class="container">
+      AutoVenda — Projeto Integrador Transdisciplinar em Engenharia de Software II
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/validacao.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

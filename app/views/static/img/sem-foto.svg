@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Sem foto">
+  <rect width="400" height="300" fill="#e9edf5"/>
+  <g fill="none" stroke="#9aa5b8" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M90 190h220M110 190l20-50c4-10 12-16 23-16h94c11 0 19 6 23 16l20 50"/>
+    <rect x="80" y="170" width="240" height="50" rx="12"/>
+    <circle cx="135" cy="225" r="18" fill="#e9edf5"/>
+    <circle cx="265" cy="225" r="18" fill="#e9edf5"/>
+  </g>
+  <text x="200" y="275" text-anchor="middle" font-family="system-ui, sans-serif" font-size="18" fill="#7a8599">Foto indisponível</text>
+</svg>

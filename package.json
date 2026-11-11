@@ -1,0 +1,8 @@
+{
+  "name": "autovenda-frontend-tests",
+  "private": true,
+  "description": "Testes do JavaScript do front-end do AutoVenda",
+  "scripts": {
+    "test": "node --test \"tests/frontend/*.test.js\""
+  }
+}

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge_status, paginar %}
+{% block titulo %}Veículos{% endblock %}
+{% block conteudo %}
+<div class="cabecalho-pagina">
+  <h1>Veículos</h1>
+  <a class="botao" href="{{ url_for('veiculos.novo') }}">+ Cadastrar veículo</a>
+</div>
+
+<form class="barra-filtros" method="get" action="{{ url_for('veiculos.lista') }}">
+  <label for="q" class="visualmente-oculto">Buscar</label>
+  <input id="q" name="q" type="search" placeholder="Modelo, marca ou placa" value="{{ termo }}">
+  <label for="status" class="visualmente-oculto">Status</label>
+  <select id="status" name="status">
+    <option value="">Todos os status</option>
+    {% for valor, rotulo in status_opcoes.items() %}<option value="{{ valor }}" {% if valor == status %}selected{% endif %}>{{ rotulo }}</option>{% endfor %}
+  </select>
+  <button class="botao botao--secundario" type="submit">Filtrar</button>
+</form>
+
+{% if paginacao.items %}
+<div class="tabela-rolagem">
+  <table class="tabela">
+    <thead>
+      <tr><th scope="col">Veículo</th><th scope="col">Placa</th><th scope="col">Ano</th><th scope="col">Km</th><th scope="col">Preço</th><th scope="col">Status</th><th scope="col"><span class="visualmente-oculto">Ações</span></th></tr>
+    </thead>
+    <tbody>
+      {% for v in paginacao.items %}
+      <tr>
+        <td data-rotulo="Veículo">
+          <div class="tabela__veiculo">
+            <img src="{{ imagem_veiculo(v) }}" alt="" width="64" height="44">
+            <span>{{ v.titulo }}</span>
+          </div>
+        </td>
+        <td data-rotulo="Placa">{{ v.placa_formatada }}</td>
+        <td data-rotulo="Ano">{{ v.anos }}</td>
+        <td data-rotulo="Km">{{ v.quilometragem|milhar }}</td>
+        <td data-rotulo="Preço">{{ v.preco|moeda }}</td>
+        <td data-rotulo="Status">{{ badge_status(v.status, v.status_rotulo) }}</td>
+        <td class="tabela__acoes">
+          {% if v.status != 'VENDIDO' %}
+            <a class="botao botao--pequeno botao--secundario" href="{{ url_for('veiculos.editar', veiculo_id=v.id) }}">Editar</a>
+            <a class="botao botao--pequeno botao--fantasma" href="{{ url_for('catalogo.detalhe', veiculo_id=v.id) }}" target="_blank" rel="noopener">Ver anúncio</a>
+            <a class="botao botao--pequeno botao--fantasma" href="{{ url_for('vendas.nova', veiculo_id=v.id) }}">Vender</a>
+            {% if g.usuario.eh_admin %}
+              <form method="post" action="{{ url_for('veiculos.excluir', veiculo_id=v.id) }}" data-confirmar="Excluir definitivamente o veículo {{ v.titulo }} ({{ v.placa_formatada }})? Esta ação não pode ser desfeita.">
+                {{ campo_csrf() }}
+                <button class="botao botao--pequeno botao--perigo" type="submit">Excluir</button>
+              </form>
+            {% endif %}
+          {% else %}
+            <small>Vendido em {{ v.venda.data_venda|data if v.venda else '—' }}</small>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{{ paginar(paginacao, 'veiculos.lista') }}
+{% else %}
+  <div class="vazio">
+    <p><strong>Nenhum veículo encontrado.</strong></p>
+    <a class="botao" href="{{ url_for('veiculos.novo') }}">Cadastrar o primeiro veículo</a>
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge_status, paginar %}
+{% block titulo %}Propostas{% endblock %}
+{% block conteudo %}
+<h1>Propostas</h1>
+
+<nav class="abas" aria-label="Filtrar por status">
+  {% for valor, rotulo in status_opcoes.items() %}
+    <a href="{{ url_for('propostas.lista', status=valor) }}" {% if valor == status %}aria-current="page"{% endif %}>{{ rotulo }}s</a>
+  {% endfor %}
+  <a href="{{ url_for('propostas.lista', status='TODAS') }}" {% if status not in status_opcoes %}aria-current="page"{% endif %}>Todas</a>
+</nav>
+
+{% if paginacao.items %}
+<div class="tabela-rolagem">
+  <table class="tabela">
+    <thead>
+      <tr><th scope="col">Data</th><th scope="col">Cliente</th><th scope="col">Veículo</th><th scope="col">Anunciado</th><th scope="col">Oferta</th><th scope="col">Status</th><th scope="col"><span class="visualmente-oculto">Ações</span></th></tr>
+    </thead>
+    <tbody>
+      {% for p in paginacao.items %}
+      <tr>
+        <td data-rotulo="Data">{{ p.criado_em|data_hora }}</td>
+        <td data-rotulo="Cliente">
+          <strong>{{ p.cliente.nome }}</strong><br>
+          <small><a href="mailto:{{ p.cliente.email }}">{{ p.cliente.email }}</a> · {{ p.cliente.telefone_formatado }}</small>
+          {% if p.mensagem %}<details><summary>Mensagem</summary><p>{{ p.mensagem }}</p></details>{% endif %}
+        </td>
+        <td data-rotulo="Veículo">{{ p.veiculo.titulo }}<br><small>{{ badge_status(p.veiculo.status, p.veiculo.status_rotulo) }}</small></td>
+        <td data-rotulo="Anunciado">{{ p.veiculo.preco|moeda }}</td>
+        <td data-rotulo="Oferta"><strong>{{ p.valor_ofertado|moeda }}</strong></td>
+        <td data-rotulo="Status">{{ badge_status(p.status, p.status_rotulo) }}</td>
+        <td class="tabela__acoes">
+          {% if p.veiculo.status != 'VENDIDO' %}
+            {% if p.status == 'PENDENTE' %}
+              <form method="post" action="{{ url_for('propostas.aceitar', proposta_id=p.id) }}" data-confirmar="Aceitar a proposta de {{ p.cliente.nome }}? O veículo ficará reservado.">
+                {{ campo_csrf() }}<button class="botao botao--pequeno" type="submit">Aceitar</button>
+              </form>
+            {% endif %}
+            {% if p.status == 'ACEITA' %}
+              <a class="botao botao--pequeno" href="{{ url_for('vendas.nova', proposta_id=p.id) }}">Registrar venda</a>
+            {% endif %}
+            {% if p.status != 'RECUSADA' %}
+              <form method="post" action="{{ url_for('propostas.recusar', proposta_id=p.id) }}" data-confirmar="Recusar a proposta de {{ p.cliente.nome }}?">
+                {{ campo_csrf() }}<button class="botao botao--pequeno botao--perigo" type="submit">Recusar</button>
+              </form>
+            {% endif %}
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{{ paginar(paginacao, 'propostas.lista') }}
+{% else %}
+  <div class="vazio"><p>Nenhuma proposta {{ status_opcoes.get(status, '')|lower }} no momento.</p></div>
+{% endif %}
+{% endblock %}

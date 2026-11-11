@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block titulo %}Entrar{% endblock %}
+{% block conteudo %}
+<section class="login cartao-form">
+  <h1>Área do vendedor</h1>
+  <p class="ajuda">Acesso restrito aos funcionários da loja.</p>
+  <form method="post" action="{{ url_for('auth.login', proximo=request.args.get('proximo')) }}" data-validar novalidate>
+    {{ campo_csrf() }}
+    <div class="campo">
+      <label for="email">E-mail</label>
+      <input id="email" name="email" type="email" value="{{ email }}" required autocomplete="username" data-regra="email" autofocus>
+      <small class="erro-campo"></small>
+    </div>
+    <div class="campo">
+      <label for="senha">Senha</label>
+      <div class="senha">
+        <input id="senha" name="senha" type="password" required autocomplete="current-password">
+        <button type="button" class="botao botao--fantasma botao--pequeno" data-mostrar-senha="senha" aria-pressed="false">Mostrar</button>
+      </div>
+      <small class="erro-campo"></small>
+    </div>
+    <button class="botao botao--bloco" type="submit">Entrar</button>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo, selecao, texto_longo %}
+{% set editando = veiculo is not none %}
+{% block titulo %}{{ 'Editar veículo' if editando else 'Cadastrar veículo' }}{% endblock %}
+{% block conteudo %}
+<nav class="trilha" aria-label="Você está em">
+  <a href="{{ url_for('veiculos.lista') }}">Veículos</a> <span aria-hidden="true">›</span>
+  <span aria-current="page">{{ 'Editar' if editando else 'Cadastrar' }}</span>
+</nav>
+<h1>{{ 'Editar ' ~ veiculo.titulo if editando else 'Cadastrar veículo' }}</h1>
+<p class="ajuda">Campos com <span class="obrigatorio">*</span> são obrigatórios.</p>
+
+<form class="cartao-form formulario-grade" method="post" enctype="multipart/form-data"
+      action="{{ url_for('veiculos.editar', veiculo_id=veiculo.id) if editando else url_for('veiculos.novo') }}"
+      data-validar novalidate>
+  {{ campo_csrf() }}
+
+  <fieldset>
+    <legend>Identificação</legend>
+    {% set opcoes_marca = [] %}
+    {% for m in marcas %}{% set _ = opcoes_marca.append((m.id, m.nome)) %}{% endfor %}
+    {{ selecao('marca_id', 'Marca', opcoes_marca, dados, erros, obrigatorio=true) }}
+    {{ campo('modelo', 'Modelo', dados, erros, obrigatorio=true, atributos='maxlength="80" placeholder="Ex.: Onix"') }}
+    {{ campo('versao', 'Versão', dados, erros, atributos='maxlength="80" placeholder="Ex.: 1.0 Turbo LT"') }}
+    {{ campo('placa', 'Placa', dados, erros, obrigatorio=true, ajuda='Formato ABC1234 ou Mercosul ABC1D23', atributos='maxlength="8" data-regra="placa" data-maiusculas') }}
+  </fieldset>
+
+  <fieldset>
+    <legend>Características</legend>
+    {{ campo('ano_fabricacao', 'Ano de fabricação', dados, erros, tipo='number', obrigatorio=true, atributos='min="1950" max="2100" data-regra="ano-fabricacao"') }}
+    {{ campo('ano_modelo', 'Ano do modelo', dados, erros, tipo='number', obrigatorio=true, ajuda='Igual ao de fabricação ou o ano seguinte', atributos='min="1950" max="2100" data-regra="ano-modelo"') }}
+    {{ campo('cor', 'Cor', dados, erros, obrigatorio=true, atributos='maxlength="30"') }}
+    {{ campo('quilometragem', 'Quilometragem', dados, erros, tipo='number', obrigatorio=true, atributos='min="0" max="2000000" step="1"') }}
+    {{ selecao('combustivel', 'Combustível', combustiveis.items(), dados, erros, obrigatorio=true) }}
+    {{ selecao('cambio', 'Câmbio', cambios.items(), dados, erros, obrigatorio=true) }}
+  </fieldset>
+
+  <fieldset>
+    <legend>Anúncio</legend>
+    {{ campo('preco', 'Preço (R$)', dados, erros, tipo='number', obrigatorio=true, atributos='min="0.01" step="0.01" data-regra="positivo"') }}
+    {% set erro_imagem = erros.get('imagem') %}
+    <div class="campo{% if erro_imagem %} campo--erro{% endif %}">
+      <label for="imagem">Foto</label>
+      <input id="imagem" name="imagem" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+             data-preview="previa-imagem" data-tamanho-maximo="5242880" aria-describedby="erro-imagem">
+      <small class="ajuda">JPG, PNG ou WEBP até 5 MB.{% if editando and veiculo.imagem %} Envie outra para substituir a atual.{% endif %}</small>
+      <small class="erro-campo" id="erro-imagem">{{ erro_imagem or '' }}</small>
+      <img id="previa-imagem" class="previa" alt="Pré-visualização da foto"
+           {% if editando %}src="{{ imagem_veiculo(veiculo) }}"{% else %}hidden{% endif %}>
+    </div>
+    {{ texto_longo('descricao', 'Descrição', dados, erros, maximo=2000, linhas=5) }}
+  </fieldset>
+
+  <div class="acoes-form">
+    <a class="botao botao--fantasma" href="{{ url_for('veiculos.lista') }}">Cancelar</a>
+    <button class="botao" type="submit">{{ 'Salvar alterações' if editando else 'Cadastrar veículo' }}</button>
+  </div>
+</form>
+{% endblock %}

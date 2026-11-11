@@ -1,0 +1,29 @@
+# Ambiente Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Banco local e fotos enviadas
+instance/
+app/views/static/uploads/*
+!app/views/static/uploads/.gitkeep
+
+# Material da disciplina (não redistribuir)
+PITESoftwareII.pdf
+
+# Editores / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+node_modules/
+
+# Fontes de documentação e material de apoio local
+# Os documentos entregáveis ficam em PDF na pasta entrega/.
+materiais-locais/
+docs/
+*.md

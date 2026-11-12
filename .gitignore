@@ -27,3 +27,6 @@ node_modules/
 materiais-locais/
 docs/
 *.md
+# Exceção: o README é a página inicial do repositório e precisa estar versionado.
+# Ele também é a fonte do PDF 00, para não existirem duas cópias divergentes.
+!/README.md

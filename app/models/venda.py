@@ -44,7 +44,7 @@ class Venda(db.Model):
 
     @classmethod
     def registrar(cls, dados, vendedor):
-        _, erros = Cliente.validar_dados(dados, cpf_obrigatorio=True)
+        normalizados, erros = Cliente.validar_dados(dados, cpf_obrigatorio=True)
 
         veiculo_id = converter_inteiro(dados.get("veiculo_id"))
         veiculo = db.session.get(Veiculo, veiculo_id) if veiculo_id else None
@@ -71,11 +71,33 @@ class Venda(db.Model):
                 or (veiculo is not None and proposta.veiculo_id != veiculo.id)
             ):
                 erros["proposta_id"] = "A proposta informada não é válida para este veículo."
+            elif proposta.cliente.email != normalizados["email"]:
+                # Sem esta conferência a venda sairia vinculada à proposta de uma
+                # pessoa e registrada no nome de outra, e o histórico da loja
+                # passaria a dizer duas coisas diferentes sobre o mesmo negócio.
+                erros["proposta_id"] = (
+                    f"A proposta selecionada é de {proposta.cliente.nome} "
+                    f"({proposta.cliente.email}). Para vender a outro comprador, "
+                    "recuse essa proposta antes ou corrija os dados do comprador."
+                )
+
+        # Um veículo reservado está prometido a quem teve a proposta aceita.
+        # Vender para outra pessoa sem recusar a proposta antes é possível na
+        # prática, mas não pode acontecer em silêncio: antes, a proposta aceita
+        # era rebaixada para RECUSADA sem o vendedor sequer ser avisado.
+        if veiculo is not None and veiculo.status == "RESERVADO" and "veiculo_id" not in erros:
+            aceita = next((p for p in veiculo.propostas if p.status == "ACEITA"), None)
+            if aceita is not None and (proposta is None or aceita.id != proposta.id):
+                erros["veiculo_id"] = (
+                    f"Este veículo está reservado para {aceita.cliente.nome} "
+                    f"({aceita.cliente.email}), que teve a proposta aceita. "
+                    "Recuse essa proposta antes de vender para outro comprador."
+                )
 
         if erros:
             raise ErroValidacao(erros)
 
-        cliente = Cliente.obter_ou_criar(dados, cpf_obrigatorio=True)
+        cliente = Cliente.obter_ou_criar(dados, cpf_obrigatorio=True, atualizar_cadastro=True)
         venda = cls(
             veiculo=veiculo,
             cliente=cliente,

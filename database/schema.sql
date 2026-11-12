@@ -41,7 +41,13 @@ CREATE TABLE cliente (
     cpf        VARCHAR(11),                      -- obrigatório apenas na venda
     criado_em  TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uq_cliente_email UNIQUE (email),
-    CONSTRAINT uq_cliente_cpf   UNIQUE (cpf)
+    CONSTRAINT uq_cliente_cpf   UNIQUE (cpf),
+    -- Os CHECK de formato abaixo repetem no banco o que o Model já valida.
+    -- Sem eles, uma carga feita direto por SQL (importação, migração) grava
+    -- telefone com máscara ou CPF incompleto, e a aplicação passa a exibir
+    -- dado quebrado em tela.
+    CONSTRAINT ck_cliente_telefone CHECK (telefone ~ '^[0-9]{10,11}$'),
+    CONSTRAINT ck_cliente_cpf      CHECK (cpf IS NULL OR cpf ~ '^[0-9]{11}$')
 );
 
 -- ---------------------------------------------------------------------
@@ -72,10 +78,30 @@ CREATE TABLE veiculo (
     CONSTRAINT ck_veiculo_ano_modelo    CHECK (ano_modelo >= ano_fabricacao AND ano_modelo <= ano_fabricacao + 1),
     CONSTRAINT ck_veiculo_combustivel   CHECK (combustivel IN ('FLEX','GASOLINA','ETANOL','DIESEL','HIBRIDO','ELETRICO')),
     CONSTRAINT ck_veiculo_cambio        CHECK (cambio IN ('MANUAL','AUTOMATICO')),
-    CONSTRAINT ck_veiculo_status        CHECK (status IN ('DISPONIVEL','RESERVADO','VENDIDO'))
+    CONSTRAINT ck_veiculo_status        CHECK (status IN ('DISPONIVEL','RESERVADO','VENDIDO')),
+    -- Placa antiga (ABC1234) ou Mercosul (ABC1D23), sempre com 7 posições e
+    -- em maiúsculas. O Model valida com a mesma expressão; replicar aqui
+    -- protege o banco de cargas feitas fora da aplicação, que já causaram
+    -- falha na listagem do painel ao gravar placa com menos de 7 caracteres.
+    CONSTRAINT ck_veiculo_placa         CHECK (placa ~ '^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$')
 );
 CREATE INDEX ix_veiculo_marca_id ON veiculo (marca_id);
 CREATE INDEX ix_veiculo_status   ON veiculo (status);
+
+-- O campo atualizado_em é mantido pela aplicação (onupdate do SQLAlchemy).
+-- Um UPDATE executado direto no banco não passa por ela, então a trigger
+-- abaixo garante que a coluna reflita de fato a última alteração da linha.
+CREATE OR REPLACE FUNCTION fn_veiculo_atualizado_em() RETURNS TRIGGER AS $$
+BEGIN
+    NEW.atualizado_em := CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tg_veiculo_atualizado_em
+    BEFORE UPDATE ON veiculo
+    FOR EACH ROW
+    EXECUTE FUNCTION fn_veiculo_atualizado_em();
 
 -- ---------------------------------------------------------------------
 -- PROPOSTA: ofertas enviadas pela vitrine

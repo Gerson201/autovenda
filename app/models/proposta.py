@@ -53,6 +53,18 @@ class Proposta(db.Model):
             raise ErroValidacao(erros)
 
         cliente = Cliente.obter_ou_criar(dados)
+        # Uma proposta em análise por vez, por pessoa e por veículo. Sem isso o
+        # formulário público aceita envios ilimitados: a fila do vendedor enche
+        # de duplicatas e um robô consegue inundar a tabela de propostas.
+        if cliente.id is not None:
+            pendente = cls.query.filter_by(
+                veiculo_id=veiculo.id, cliente_id=cliente.id, status="PENDENTE"
+            ).first()
+            if pendente is not None:
+                raise ErroRegraNegocio(
+                    "Você já tem uma proposta em análise para este veículo. "
+                    "Aguarde o contato do vendedor antes de enviar outra."
+                )
         proposta = cls(
             veiculo=veiculo, cliente=cliente, valor_ofertado=valor, mensagem=mensagem or None
         )

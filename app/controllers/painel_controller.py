@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template
+from sqlalchemy.orm import joinedload
 
 from ..extensions import db
 from ..models import Proposta, Veiculo, Venda
@@ -21,9 +22,24 @@ def index():
         "faturamento": Venda.faturamento_total(),
     }
     ultimas_propostas = (
-        Proposta.query.filter_by(status="PENDENTE").order_by(Proposta.criado_em.desc()).limit(5).all()
+        Proposta.query.options(
+            joinedload(Proposta.cliente),
+            joinedload(Proposta.veiculo).joinedload(Veiculo.marca),
+        )
+        .filter_by(status="PENDENTE")
+        .order_by(Proposta.criado_em.desc())
+        .limit(5)
+        .all()
     )
-    ultimas_vendas = Venda.query.order_by(Venda.data_venda.desc()).limit(5).all()
+    ultimas_vendas = (
+        Venda.query.options(
+            joinedload(Venda.veiculo).joinedload(Veiculo.marca),
+            joinedload(Venda.vendedor),
+        )
+        .order_by(Venda.data_venda.desc())
+        .limit(5)
+        .all()
+    )
     return render_template(
         "painel/index.html",
         resumo=resumo,

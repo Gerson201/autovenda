@@ -5,6 +5,11 @@
   <h1>Encontre seu próximo carro</h1>
   <p>Seminovos revisados, com procedência e proposta online em poucos cliques.</p>
   <form class="busca" method="get" action="{{ url_for('catalogo.index') }}" role="search">
+    {# Os filtros já aplicados viajam junto com a busca: sem isso, digitar um
+       termo descartava marca, preço, ano, combustível e câmbio sem avisar. #}
+    {% for campo, valor in filtros.items() if campo != 'q' and valor %}
+      <input type="hidden" name="{{ campo }}" value="{{ valor }}">
+    {% endfor %}
     <label for="q" class="visualmente-oculto">Buscar por marca ou modelo</label>
     <input id="q" name="q" type="search" placeholder="Busque por marca ou modelo (ex.: Corolla)" value="{{ filtros.q }}">
     <button class="botao" type="submit">Buscar</button>
@@ -28,15 +33,24 @@
           <label for="preco_min">Preço mín. (R$)</label>
           <input id="preco_min" name="preco_min" type="number" min="0" step="1000" value="{{ filtros.preco_min }}">
         </div>
-        <div class="campo">
+        <div class="campo{% if erros_filtro.get('preco_max') %} campo--erro{% endif %}">
           <label for="preco_max">Preço máx. (R$)</label>
-          <input id="preco_max" name="preco_max" type="number" min="0" step="1000" value="{{ filtros.preco_max }}">
-          <small class="erro-campo"></small>
+          <input id="preco_max" name="preco_max" type="number" min="0" step="1000" value="{{ filtros.preco_max }}"
+                 aria-describedby="erro-preco_max" {% if erros_filtro.get('preco_max') %}aria-invalid="true"{% endif %}>
+          <small class="erro-campo" id="erro-preco_max" aria-live="polite">{{ erros_filtro.get('preco_max', '') }}</small>
         </div>
       </div>
-      <div class="campo">
-        <label for="ano_min">Ano a partir de</label>
-        <input id="ano_min" name="ano_min" type="number" min="1950" max="2100" value="{{ filtros.ano_min }}">
+      <div class="campo-duplo">
+        <div class="campo">
+          <label for="ano_min">Ano a partir de</label>
+          <input id="ano_min" name="ano_min" type="number" min="1950" max="2100" value="{{ filtros.ano_min }}">
+        </div>
+        <div class="campo{% if erros_filtro.get('ano_max') %} campo--erro{% endif %}">
+          <label for="ano_max">Ano até</label>
+          <input id="ano_max" name="ano_max" type="number" min="1950" max="2100" value="{{ filtros.ano_max }}"
+                 aria-describedby="erro-ano_max" {% if erros_filtro.get('ano_max') %}aria-invalid="true"{% endif %}>
+          <small class="erro-campo" id="erro-ano_max" aria-live="polite">{{ erros_filtro.get('ano_max', '') }}</small>
+        </div>
       </div>
       <div class="campo">
         <label for="combustivel">Combustível</label>

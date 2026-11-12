@@ -56,7 +56,17 @@ class Cliente(db.Model):
         return normalizados, erros
 
     @classmethod
-    def obter_ou_criar(cls, dados, cpf_obrigatorio=False):
+    def obter_ou_criar(cls, dados, cpf_obrigatorio=False, atualizar_cadastro=False):
+        """Localiza o cliente pelo e-mail ou cria um novo.
+
+        `atualizar_cadastro` controla se o nome e o telefone de um cliente que
+        já existe podem ser reescritos com os dados enviados. A vitrine pública
+        passa False: qualquer visitante conhece o e-mail de outra pessoa e, se
+        pudesse reescrever o cadastro, trocaria o nome e o telefone de contato
+        de um cliente real só enviando uma proposta. O painel passa True,
+        porque ali quem digita é um funcionário autenticado, conferindo os
+        dados com o comprador na hora de fechar a venda.
+        """
         normalizados, erros = cls.validar_dados(dados, cpf_obrigatorio)
         if erros:
             raise ErroValidacao(erros)
@@ -65,9 +75,12 @@ class Cliente(db.Model):
         if cliente is None:
             cliente = cls(email=normalizados["email"])
             db.session.add(cliente)
-        cliente.nome = normalizados["nome"]
-        cliente.telefone = normalizados["telefone"]
-        if normalizados["cpf"]:
+            cliente.nome = normalizados["nome"]
+            cliente.telefone = normalizados["telefone"]
+        elif atualizar_cadastro:
+            cliente.nome = normalizados["nome"]
+            cliente.telefone = normalizados["telefone"]
+        if normalizados["cpf"] and not cliente.cpf:
             cliente.cpf = normalizados["cpf"]
         return cliente
 

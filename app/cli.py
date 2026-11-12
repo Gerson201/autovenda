@@ -36,7 +36,8 @@ VEICULOS_INICIAIS = [
      "189900.00", "TCC7G89", "Híbrido, baixíssimo consumo."),
 ]
 
-# Fotos livres (Wikimedia Commons) nomeadas pela placa; créditos em seed_imagens/CREDITOS.md
+# Fotos livres (Wikimedia Commons) nomeadas pela placa.
+# Autoria e licenças em entrega/04-Creditos-das-Imagens.pdf
 PASTA_IMAGENS_SEED = os.path.join(os.path.dirname(__file__), "seed_imagens")
 
 

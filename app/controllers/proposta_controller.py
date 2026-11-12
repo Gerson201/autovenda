@@ -1,7 +1,8 @@
 from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, url_for
+from sqlalchemy.orm import joinedload
 
 from ..extensions import db
-from ..models import STATUS_PROPOSTA, ErroRegraNegocio, Proposta
+from ..models import STATUS_PROPOSTA, ErroRegraNegocio, Proposta, Veiculo
 from ..seguranca import exigir_login
 
 bp = Blueprint("propostas", __name__, url_prefix="/admin/propostas")
@@ -18,7 +19,12 @@ def _obter(proposta_id):
 @bp.get("/")
 def lista():
     status = request.args.get("status", "PENDENTE")
-    consulta = Proposta.query
+    # Cada linha da tabela mostra cliente, veículo e marca: sem o joinedload
+    # são três consultas por proposta listada (N+1).
+    consulta = Proposta.query.options(
+        joinedload(Proposta.cliente),
+        joinedload(Proposta.veiculo).joinedload(Veiculo.marca),
+    )
     if status in STATUS_PROPOSTA:
         consulta = consulta.filter_by(status=status)
     paginacao = consulta.order_by(Proposta.criado_em.desc()).paginate(

@@ -39,11 +39,35 @@
     var arquivo = entrada.files && entrada.files[0];
     if (!arquivo) return null;
     var maximo = Number(entrada.dataset.tamanhoMaximo || 0);
-    if (maximo && arquivo.size > maximo) return "A imagem deve ter no máximo 5 MB.";
+    if (maximo && arquivo.size > maximo) {
+      // O limite vem do servidor (data-tamanho-maximo); a mensagem o acompanha
+      // em vez de repetir "5 MB" fixo e mentir se a configuração mudar.
+      return "A imagem deve ter no máximo " + Math.round(maximo / 1048576) + " MB.";
+    }
     if (!/\.(jpe?g|png|webp)$/i.test(arquivo.name)) {
       return "Formato de imagem não permitido. Envie um arquivo JPG, PNG ou WEBP.";
     }
     return null;
+  }
+
+  // Pares "de/até" cujo valor inicial não pode passar do final.
+  var FAIXAS = [
+    { de: "preco_min", ate: "preco_max", mensagem: "O preço máximo deve ser maior que o mínimo." },
+    { de: "ano_min", ate: "ano_max", mensagem: "O ano final deve ser maior que o inicial." },
+  ];
+
+  function validarFaixas(form) {
+    var invalido = null;
+    FAIXAS.forEach(function (faixa) {
+      var de = form.querySelector("[name=" + faixa.de + "]");
+      var ate = form.querySelector("[name=" + faixa.ate + "]");
+      if (!de || !ate || !de.value || !ate.value) return;
+      if (Number(de.value) > Number(ate.value)) {
+        mostrarErro(ate, faixa.mensagem);
+        invalido = invalido || ate;
+      }
+    });
+    return invalido;
   }
 
   function configurarFormulario(form) {
@@ -66,12 +90,10 @@
         if (erro && !primeiroInvalido) primeiroInvalido = el;
       });
 
-      var min = form.querySelector("[name=preco_min]");
-      var max = form.querySelector("[name=preco_max]");
-      if (min && max && min.value && max.value && Number(min.value) > Number(max.value)) {
-        mostrarErro(max, "O preço máximo deve ser maior que o mínimo.");
-        primeiroInvalido = primeiroInvalido || max;
-      }
+      // Sempre avaliado, mesmo com outro campo já inválido, para que o usuário
+      // veja todos os problemas de uma vez em vez de um por envio.
+      var faixaInvalida = validarFaixas(form);
+      primeiroInvalido = primeiroInvalido || faixaInvalida;
 
       if (primeiroInvalido) {
         evento.preventDefault();
@@ -149,9 +171,30 @@
     var botao = document.querySelector(".menu__botao");
     var menu = document.getElementById("menu-principal");
     if (!botao || !menu) return;
-    botao.addEventListener("click", function () {
-      var aberto = menu.classList.toggle("aberto");
+
+    function definir(aberto) {
+      menu.classList.toggle("aberto", aberto);
       botao.setAttribute("aria-expanded", String(aberto));
+    }
+
+    botao.addEventListener("click", function () {
+      definir(!menu.classList.contains("aberto"));
+    });
+
+    // Esc fecha o menu e devolve o foco ao botão que o abriu: quem navega pelo
+    // teclado ficava preso dentro do menu, sem saída a não ser percorrer todos
+    // os links até o fim.
+    document.addEventListener("keydown", function (evento) {
+      if (evento.key !== "Escape" || !menu.classList.contains("aberto")) return;
+      definir(false);
+      botao.focus();
+    });
+
+    // Clicar fora também fecha, comportamento esperado em tela de celular.
+    document.addEventListener("click", function (evento) {
+      if (!menu.classList.contains("aberto")) return;
+      if (menu.contains(evento.target) || botao.contains(evento.target)) return;
+      definir(false);
     });
   }
 

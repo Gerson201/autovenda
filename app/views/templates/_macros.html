@@ -7,7 +7,7 @@
            aria-describedby="erro-{{ nome }}{% if ajuda %} ajuda-{{ nome }}{% endif %}"
            {% if erro %}aria-invalid="true"{% endif %}>
     {% if ajuda %}<small class="ajuda" id="ajuda-{{ nome }}">{{ ajuda }}</small>{% endif %}
-    <small class="erro-campo" id="erro-{{ nome }}">{{ erro or '' }}</small>
+    <small class="erro-campo" id="erro-{{ nome }}" aria-live="polite">{{ erro or '' }}</small>
   </div>
 {% endmacro %}
 
@@ -23,7 +23,7 @@
         <option value="{{ valor }}" {% if valor|string == atual %}selected{% endif %}>{{ texto }}</option>
       {% endfor %}
     </select>
-    <small class="erro-campo" id="erro-{{ nome }}">{{ erro or '' }}</small>
+    <small class="erro-campo" id="erro-{{ nome }}" aria-live="polite">{{ erro or '' }}</small>
   </div>
 {% endmacro %}
 
@@ -35,7 +35,7 @@
               data-contador {% if obrigatorio %}required{% endif %}
               aria-describedby="erro-{{ nome }}" {% if erro %}aria-invalid="true"{% endif %}>{{ dados.get(nome, '') }}</textarea>
     <small class="ajuda contador" aria-live="polite"></small>
-    <small class="erro-campo" id="erro-{{ nome }}">{{ erro or '' }}</small>
+    <small class="erro-campo" id="erro-{{ nome }}" aria-live="polite">{{ erro or '' }}</small>
   </div>
 {% endmacro %}
 

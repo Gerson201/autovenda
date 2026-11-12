@@ -1,6 +1,8 @@
 import re
 from datetime import date
 
+from sqlalchemy.orm import contains_eager
+
 from ..extensions import db
 from .erros import ErroRegraNegocio, ErroValidacao
 from .marca import Marca
@@ -101,9 +103,16 @@ class Veiculo(db.Model):
 
     @property
     def placa_formatada(self):
-        if self.placa and self.placa[4].isdigit():
+        """Hífen só na placa antiga (ABC-1234); a Mercosul não usa separador.
+
+        O comprimento é conferido porque o cadastro pela aplicação garante as 7
+        posições, mas um registro carregado direto no banco (importação, carga
+        inicial via `database/schema.sql`) pode vir fora do formato — e uma
+        placa curta derrubava a listagem inteira do painel com IndexError.
+        """
+        if self.placa and len(self.placa) == 7 and self.placa[4].isdigit():
             return f"{self.placa[:3]}-{self.placa[3:]}"
-        return self.placa
+        return self.placa or ""
 
     @property
     def placa_mascarada(self):
@@ -230,9 +239,41 @@ class Veiculo(db.Model):
     # ---------- consultas ----------
 
     @classmethod
+    def validar_faixas(cls, filtros):
+        """Confere as faixas do catálogo e devolve os erros por campo.
+
+        O JavaScript já avisa sobre a faixa invertida, mas quem monta a URL à
+        mão (ou chega por um link antigo) recebia apenas "0 veículos
+        encontrados", sem pista do motivo.
+        """
+        erros = {}
+        preco_min = converter_decimal(filtros.get("preco_min"))
+        preco_max = converter_decimal(filtros.get("preco_max"))
+        if preco_min is not None and preco_max is not None and preco_min > preco_max:
+            erros["preco_max"] = (
+                "O preço máximo deve ser maior que o mínimo. "
+                "Mostrando os resultados sem o filtro de preço."
+            )
+
+        ano_min = converter_inteiro(filtros.get("ano_min"))
+        ano_max = converter_inteiro(filtros.get("ano_max"))
+        if ano_min and ano_max and ano_min > ano_max:
+            erros["ano_max"] = (
+                "O ano final deve ser maior que o inicial. "
+                "Mostrando os resultados sem o filtro de ano."
+            )
+        return erros
+
+    @classmethod
     def buscar_catalogo(cls, filtros):
         """Consulta da vitrine pública: nunca exibe veículos vendidos."""
-        consulta = cls.query.join(Marca).filter(cls.status != "VENDIDO")
+        # A marca aparece em todos os cartões do resultado; o contains_eager
+        # aproveita o join que já existe e evita uma consulta por cartão.
+        consulta = (
+            cls.query.join(Marca)
+            .options(contains_eager(cls.marca))
+            .filter(cls.status != "VENDIDO")
+        )
 
         termo = texto(filtros.get("q"))
         if termo:
@@ -257,6 +298,10 @@ class Veiculo(db.Model):
         if ano_min:
             consulta = consulta.filter(cls.ano_modelo >= ano_min)
 
+        ano_max = converter_inteiro(filtros.get("ano_max"))
+        if ano_max:
+            consulta = consulta.filter(cls.ano_modelo <= ano_max)
+
         combustivel = texto(filtros.get("combustivel")).upper()
         if combustivel in COMBUSTIVEIS:
             consulta = consulta.filter(cls.combustivel == combustivel)
@@ -278,7 +323,7 @@ class Veiculo(db.Model):
 
     @classmethod
     def buscar_admin(cls, status=None, termo=None):
-        consulta = cls.query.join(Marca)
+        consulta = cls.query.join(Marca).options(contains_eager(cls.marca))
         if status in STATUS_VEICULO:
             consulta = consulta.filter(cls.status == status)
         termo = texto(termo)

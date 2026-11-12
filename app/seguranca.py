@@ -7,6 +7,7 @@ from markupsafe import Markup
 
 from .extensions import db
 from .models import Usuario
+from .servicos.limites import ControleTentativas
 
 
 def gerar_csrf_token():
@@ -48,6 +49,12 @@ def somente_admin(view):
 
 
 def init_app(app):
+    app.extensions["tentativas_login"] = ControleTentativas(
+        maximo=app.config["LOGIN_MAX_TENTATIVAS"],
+        janela_minutos=app.config["LOGIN_JANELA_MINUTOS"],
+        bloqueio_minutos=app.config["LOGIN_BLOQUEIO_MINUTOS"],
+    )
+
     @app.before_request
     def carregar_usuario():
         usuario_id = session.get("usuario_id")

@@ -195,11 +195,40 @@ def test_catalogo_ordenacao_por_preco(criar_veiculo):
 # ---------------- Cliente ----------------
 
 def test_cliente_reaproveitado_pelo_email(app):
+    """O e-mail identifica o cliente, inclusive com diferença de maiúsculas."""
     c1 = Cliente.obter_ou_criar(DADOS_CLIENTE)
     db.session.commit()
     c2 = Cliente.obter_ou_criar({**DADOS_CLIENTE, "email": "MARIA@exemplo.com", "telefone": "1133334444"})
     assert c1.id == c2.id
-    assert c2.telefone == "1133334444"
+
+
+def test_cliente_existente_nao_e_reescrito_pela_vitrine(app):
+    """C-01: o fluxo público não altera o cadastro de quem já existe."""
+    cliente = Cliente.obter_ou_criar(DADOS_CLIENTE)
+    db.session.commit()
+
+    Cliente.obter_ou_criar(
+        {**DADOS_CLIENTE, "nome": "Outra Pessoa", "telefone": "1133334444"}
+    )
+    db.session.commit()
+
+    assert cliente.nome == DADOS_CLIENTE["nome"]
+    assert cliente.telefone == "11987654321"
+
+
+def test_cliente_existente_e_atualizado_pelo_painel(app):
+    """O funcionário autenticado confere os dados e pode corrigir o cadastro."""
+    cliente = Cliente.obter_ou_criar(DADOS_CLIENTE)
+    db.session.commit()
+
+    Cliente.obter_ou_criar(
+        {**DADOS_CLIENTE, "nome": "Maria Souza Lima", "telefone": "1133334444"},
+        atualizar_cadastro=True,
+    )
+    db.session.commit()
+
+    assert cliente.nome == "Maria Souza Lima"
+    assert cliente.telefone == "1133334444"
 
 
 def test_cliente_validacoes(app):

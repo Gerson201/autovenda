@@ -9,7 +9,7 @@
     <div class="campo">
       <label for="email">E-mail</label>
       <input id="email" name="email" type="email" value="{{ email }}" required autocomplete="username" data-regra="email" autofocus>
-      <small class="erro-campo"></small>
+      <small class="erro-campo" aria-live="polite"></small>
     </div>
     <div class="campo">
       <label for="senha">Senha</label>
@@ -17,7 +17,7 @@
         <input id="senha" name="senha" type="password" required autocomplete="current-password">
         <button type="button" class="botao botao--fantasma botao--pequeno" data-mostrar-senha="senha" aria-pressed="false">Mostrar</button>
       </div>
-      <small class="erro-campo"></small>
+      <small class="erro-campo" aria-live="polite"></small>
     </div>
     <button class="botao botao--bloco" type="submit">Entrar</button>
   </form>
